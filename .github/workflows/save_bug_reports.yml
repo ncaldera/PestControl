@@ -10,17 +10,19 @@ permissions:
 
 jobs:
   save-bug:
-    if: github.actor != 'github-actions[bot]'  # prevent infinite loop
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Create bug_reports folder
-        run: mkdir -p bug_reports
-
       - name: Save issue as JSON
-        run: |
-          printf '%s' "${{ toJson(github.event.issue) }}" | jq '.' > bug_reports/issue_${{ github.event.issue.number }}.json
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const path = `bug_reports/issue_${{ github.event.issue.number }}.json`;
+            fs.mkdirSync("bug_reports", { recursive: true });
+            fs.writeFileSync(path, JSON.stringify(context.payload.issue, null, 2));
 
       - name: Commit and push
         run: |
