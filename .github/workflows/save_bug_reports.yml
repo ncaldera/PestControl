@@ -4,25 +4,28 @@ on:
   issues:
     types: [opened]
 
+permissions:
+  contents: write
+  issues: read
+
 jobs:
   save-bug:
+    if: github.actor != 'github-actions[bot]'  # prevent infinite loop
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
+      - name: Create bug_reports folder
+        run: mkdir -p bug_reports
 
-      - name: Install deps
-        run: pip install requests
-
-      - name: Save issue
+      - name: Save issue as JSON
         run: |
-          echo "${{ toJson(github.event.issue) }}" > bug_reports/issue_${{ github.event.issue.number }}.json
+          echo '${{ toJson(github.event.issue) }}' > bug_reports/issue_${{ github.event.issue.number }}.json
+
+      - name: Commit and push
+        run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add bug_reports/
-          git commit -m "Save bug report #${{ github.event.issue.number }}"
+          git commit -m "Auto-save bug report #${{ github.event.issue.number }}: ${{ github.event.issue.title }}"
           git push
