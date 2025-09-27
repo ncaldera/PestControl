@@ -1,0 +1,28 @@
+name: Save Bug Reports
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  save-bug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Save issue
+        run: |
+          echo "${{ toJson(github.event.issue) }}" > bug_reports/issue_${{ github.event.issue.number }}.json
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add bug_reports/
+          git commit -m "Save bug report #${{ github.event.issue.number }}"
+          git push
