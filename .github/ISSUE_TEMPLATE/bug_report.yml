@@ -32,13 +32,10 @@ body:
     attributes:
       label: Test cases
       description: |
-        Please paste the tests code that the bug fails. AI-powered solution is currently only compatible with pytest.
-        Wrap it in triple backticks (```) for formatting.
+        Please paste the pathway of the tests that the bug fails. AI-powered solution is currently only compatible with pytest.
+      
       placeholder: |
-        ```python
-        def test_case():
-            return 1/0
-        ```
+        folder/tests.py
     validations:
       required: true
 
