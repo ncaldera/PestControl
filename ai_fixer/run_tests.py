@@ -24,7 +24,7 @@ run again option? [did it work y/n -> rerun prompt]
 
 '''
 from colorama import Fore, Back, Style, init
-import json, shuntil, subprocess, os
+import json, shuntil, subprocess, os, tempfile
 
 def main():
 
@@ -81,10 +81,8 @@ def main():
             input_data = json.load(f)
         
         tests = input_data["tests"]
-        patch = input_data["fixed_code_path"] # just fixed code
-        data = input_data["patch_path"] # why, line nums, num trys
+        fixed_code = input_data["fixed_code_path"] # just fixed code
 
-        #* num trys, line num -> make copy of original, patch, why
         patch_data = {}
         with open(patch_path, "r", encoding="utf-8") as f:
             for line in f:
@@ -92,9 +90,17 @@ def main():
                     key, value = line.split(":", 1)
                     patch_data[key.strip()] = value.strip()
 
-        why = patch_data.get("why")
-        line_nums = [int(x) for x in patch_data.get("line_nums", "").split(",") if x]
-        num_tries = int(patch_data.get("num_tries", 0))
+        num_tries = int(patch_data.get("attempts", 4))
+        start_line = int(patch_data.get("start_line"))
+        end_line = int(patch_data.get("end_line"))
+        why = patch_data.get("why", "")
+
+        #TODO make copy of original
+        
+
+        #TODO apply fixed_code
+        #TODO run tests
+
 
 
 
