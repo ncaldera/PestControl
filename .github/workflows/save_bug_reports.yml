@@ -20,7 +20,7 @@ jobs:
 
       - name: Save issue as JSON
         run: |
-          echo "${{ toJson(github.event.issue) }}" | jq '.' > bug_reports/issue_${{ github.event.issue.number }}.json
+          printf '%s' "${{ toJson(github.event.issue) }}" | jq '.' > bug_reports/issue_${{ github.event.issue.number }}.json
 
       - name: Commit and push
         run: |
