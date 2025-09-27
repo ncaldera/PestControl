@@ -32,21 +32,13 @@ body:
     attributes:
       label: Test cases
       description: |
-        Please paste the tests code that the bug fails.  
+        Please paste the tests code that the bug fails. AI-powered solution is currently only compatible with pytest.
         Wrap it in triple backticks (```) for formatting.
       placeholder: |
         ```python
         def test_case():
             return 1/0
         ```
-    validations:
-      required: true
-
-  - type: textarea
-    id: correct-output
-    attributes:
-      label: Correct output
-      description: Please paste in the correct output for the test code above.
     validations:
       required: true
 
