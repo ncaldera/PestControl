@@ -64,22 +64,38 @@ def main():
 
     success = False
 
-    #!FIRST ITERATION
+    #!SAVE ORIGINAL CODE FOR FOLLOWING INPUTS
     with open("combined.json") as f:
             input_data = json.load(f)
     
-    original_code_path = input_data["original_code_path"] #for next input
+    original_code_path = input_data["original_code_path"]
     context_files = input_data["context_files"]
 
-    
-
-    #!NEXT ITERATIONS (LOOP)
+    #!ITERATIONS
 
     for i in range(num_loops):
-        #TODO run gemini and get new input
+        if i > 0
+            #TODO run gemini and get new input
         
         with open("combined.json") as f:
             input_data = json.load(f)
+        
+        tests = input_data["tests"]
+        patch = input_data["fixed_code_path"] # just fixed code
+        data = input_data["patch_path"] # why, line nums, num trys
+
+        #* num trys, line num -> make copy of original, patch, why
+        patch_data = {}
+        with open(patch_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if ":" in line:
+                    key, value = line.split(":", 1)
+                    patch_data[key.strip()] = value.strip()
+
+        why = patch_data.get("why")
+        line_nums = [int(x) for x in patch_data.get("line_nums", "").split(",") if x]
+        num_tries = int(patch_data.get("num_tries", 0))
+
 
 
 
