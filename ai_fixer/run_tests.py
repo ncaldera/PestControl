@@ -24,64 +24,30 @@ run again option? [did it work y/n -> rerun prompt]
 
 '''
 from colorama import Fore, Back, Style, init
-import json, shuntil, subprocess, os, tempfile
+import json, shutil, subprocess, os, tempfile
 
-def main():
-
-    for i in range(num_loops):
-        #TODO run gemini and get input
-        
-        with open("combined.json") as f:
-            input_data = json.load(f)
-
-
-        original_code_path = input_data["original_code_path"] #for next input
-        patch = input_data["patch_path"] #why, line nums, num trys, context files
-
-        tests = input_data["tests"]
-
-        patched_code = input_data["fixed_code_path"] # just fixed code
-        path_to_txt = Path(patched_code)
-        patched_code_py = path_to_txt.with_suffix(".py") #path to executable 
-        
-        # copy text from txt to executabe
-        with open(path_to_txt, "r", encoding="utf-8") as f:
-            code = f.read()
-
-        with open(patched_code_py, "w", encoding="utf-8") as f:
-            f.write(code)
-
-        # run tests
-        workdir = str(patched_code_py.parent)
-        result = subprocess.run(["pytest"] + tests, cwd = workdir)
-
-        if result.returncode == 0 # all tests passed
-            success = True
-            break
-
-
-
-
+def tester(num_loops, manual, file_path): # int num loops, bool manual y/n, file_path dir
     success = False
 
-    #!SAVE ORIGINAL CODE FOR FOLLOWING INPUTS
+    #! SAVE ORIGINAL CODE FOR FOLLOWING INPUTS
     with open("combined.json") as f:
             input_data = json.load(f)
     
     original_code_path = input_data["original_code_path"]
     context_files = input_data["context_files"]
 
-    #!ITERATIONS
-
+    #! RUN TESTS
     for i in range(num_loops):
-        if i > 0
-            #TODO run gemini and get new input
+        if i > 0:
+            #TODO run gemini (args: file path) and get new input
+            pass #TODO delete
         
         with open("combined.json") as f:
             input_data = json.load(f)
         
         tests = input_data["tests"]
         fixed_code = input_data["fixed_code_path"] # just fixed code
+        patch_path = input_data["patch_path"]
 
         patch_data = {}
         with open(patch_path, "r", encoding="utf-8") as f:
@@ -90,18 +56,19 @@ def main():
                     key, value = line.split(":", 1)
                     patch_data[key.strip()] = value.strip()
 
-        num_tries = int(patch_data.get("attempts", 4))
         start_line = int(patch_data.get("start_line"))
         end_line = int(patch_data.get("end_line"))
         why = patch_data.get("why", "")
 
         #TODO make copy of original
-        
 
         #TODO apply fixed_code
-        #TODO run tests
+        #TODO run tests, get result
+        #TODO if manual -> print in terminal, if not
 
-
+        if result.returncode == 0: # all tests passed
+            success = True
+            break
 
 
 
@@ -124,10 +91,8 @@ def main():
         print(Style.BRIGHT + "Patch description: ")
         print(Style.RESET_ALL + why)
     else:
-        print(Fore.RED + "All generated patches failed :(")
+        print(Fore.RED + "All generated patches failed :")
 
     again = input(Back.WHITE + "Run again? [y/n]: ")
     if again.lower().startswith("y"):
-        main()
-    else:
-        sys.exit()
+        tester()
