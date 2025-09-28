@@ -1,0 +1,5 @@
+streamlit
+colorama
+pytest
+pyyaml
+google-generativeai
