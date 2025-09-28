@@ -37,9 +37,9 @@ def process_bug_report(file_path, config):
         print("⚠️ No test cases provided. Running in patch-only mode.")
 
     patch_path = tester(
-        extracted_dir,
+        folder_path=extracted_dir,
         manual= config.get("mode", "manual") == "manual",
-        retries=config.get("max_retries", 3),
+        num_loops=config.get("max_retries", 3),
         skip_tests=skip_tests
     )
 
