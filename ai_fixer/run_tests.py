@@ -58,15 +58,24 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         why = patch_data.get("why", "")
 
         #! if not given tests to run code with, suggest patch anyways
+        try:
+            result = subprocess.run(
+                ["git", "diff", "--no-index", orig_file, fixed_code],
+                capture_output=True,
+                text=True
+            )
+            patch_text = result.stdout
+        except Exception:
+            patch_text = None
+
+        if not patch_text:
+            patch_text = Path(fixed_code).read_text(encoding="utf-8") if Path(fixed_code).exists() else ""
+            
         if skip_tests:
             if manual:
                 print(f"{Fore.YELLOW} No test cases provided. Running in patch-only mode.{Style.RESET_ALL}")
 
-            patch_contents = ""
-            with open(fixed_code, "r", encoding="utf-8") as f:
-                patch_contents = f.read()
-            patch_contents = Path(fixed_code).read_text(encoding="utf-8")
-            return file(success, 1, why, start_line, end_line, patch_contents, skip_tests)
+            break
 
         #! save original file, temporaily overwrite with fixed code to run tests, restore
         with open(fixed_code, "r", encoding="utf-8") as f:
@@ -94,23 +103,15 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
     #! output files: success or fail, tested num patches, patch contents, original code, fixed code, and why buggy
     output_path = "output.txt"
 
-    try:
-        result = subprocess.run(
-            ["git", "diff", "--no-index", orig_file, fixed_code],
-            capture_output=True,
-            text=True
-        )
-        patch_text = result.stdout
-    except Exception:
-        patch_text = None
-
-    if not patch_text:
-        patch_text = Path(fixed_code).read_text(encoding="utf-8") if Path(fixed_code).exists() else ""
+    patch_text = ""
+    with open(fixed_code, "r", encoding="utf-8") as f:
+        patch_text = f.read()
+    patch_text = Path(fixed_code).read_text(encoding="utf-8")
 
     report = {
         "original_file": orig_file,                     # just path
         "fixed_file": fixed_code if Path(fixed_code).exists() else "",
-        "status": "Success" if success else "Fail",
+        "status": "Success" if success else ("Skipped tests" if skip_tests else "Fail"),
         "start_line": start_line,
         "end_line": end_line,
         "why": why,
@@ -118,7 +119,6 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         "timestamp": datetime.now().isoformat()
     }
 
-    output_path = "output.txt"
     with open(output_path, "a", encoding="utf-8") as f:
         f.write("=== REPORT START ===\n")
         f.write(f"Original: {report['original_file']}\n")
