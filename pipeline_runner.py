@@ -39,7 +39,7 @@ def process_bug_report(file_path, config):
     patch_path = tester(
         extracted_dir,
         manual= config.get("mode", "manual") == "manual",
-        retries=config.get("max_retries", 3)
+        retries=config.get("max_retries", 3),
         skip_tests=skip_tests
     )
 
