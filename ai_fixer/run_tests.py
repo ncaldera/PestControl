@@ -86,6 +86,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
     context_files_path = os.path.join(folder_path, "context_files.txt")
     description_path = os.path.join(folder_path, "description_of_the_bug.txt")
     test_cases_path = os.path.join(folder_path, "test_cases.txt")
+    original_file = os.path.join(folder_path, "code_with_error_path.txt")
 
     with open(test_cases_path, "r", encoding="utf-8") as f:
         test_cases = [line.strip() for line in f if line.strip()]
@@ -94,6 +95,9 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
     with open(context_files_path, "r", encoding="utf-8") as f:
         context_files = [line.strip() for line in f if line.strip()]
     print(f"[DEBUG] Context files: {context_files}")
+
+    with open(original_file, "r", encoding="utf-8") as f:
+        original_file_path = f.readline().strip()
 
     combined_json = running_gemini(original_code_path, context_files, description_path, test_cases)
     print(f"[DEBUG] Gemini output: {json.dumps(combined_json, indent=2)}")
