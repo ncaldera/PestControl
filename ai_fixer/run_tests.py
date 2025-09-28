@@ -67,7 +67,7 @@ def file(success, num_runs, why, start_line, end_line, fixed_code, patch_content
         
 
 #! main func
-def tester(num_loops, manual, folder_path): # int num loops, bool manual y/n, file_path dir
+def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool manual y/n, file_path dir
     success = False
 
     #! saving original code path, first gemini run
@@ -110,6 +110,15 @@ def tester(num_loops, manual, folder_path): # int num loops, bool manual y/n, fi
         temp_fixed_code = create__copy(original_code_path)
 
         apply_patch(temp_fixed_code, fixed_code, start_line, end_line)
+
+        if skip_tests:
+            if manual:
+                print(f"{Fore.YELLOW} No test cases provided. Running in patch-only mode.{Style.RESET_ALL}")
+            success = True  # treat patch generation as success
+            patch_contents = ""
+            with open(fixed_code, "r", encoding="utf-8") as f:
+                patch_contents = f.read()
+            return file(success, 1, why, start_line, end_line, fixed_code, patch_contents)
 
         try:
             sys.path.insert(0, os.path.dirname(temp_fixed_code))

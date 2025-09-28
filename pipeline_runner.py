@@ -18,10 +18,29 @@ def process_bug_report(file_path, config):
     
     extracted_dir = extract_bug_report(file_path)
 
+    # Safety checks: decide how to run depending on fields
+    test_cases_path = os.path.join(extracted_dir, "test_cases.txt")
+    code_with_error_path = os.path.join(extracted_dir, "code_with_error.txt")
+
+    # Load contents
+    with open(test_cases_path, "r") as f:
+        tests = f.read().strip()
+    with open(code_with_error_path, "r") as f:
+        code = f.read().strip()
+
+    if not code or code.startswith("# No code"):
+        print("❌ No code snippet provided. Cannot run repair agent.")
+        return
+
+    skip_tests = not tests or tests.startswith("# No tests")
+    if skip_tests:
+        print("⚠️ No test cases provided. Running in patch-only mode.")
+
     patch_path = tester(
         extracted_dir,
         manual= config.get("mode", "manual") == "manual",
         retries=config.get("max_retries", 3)
+        skip_tests=skip_tests
     )
 
     #Save patch in proposed_fixes/
