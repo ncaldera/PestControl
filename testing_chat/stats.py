@@ -1,0 +1,17 @@
+# mylib/stats.py
+
+def median(nums):
+    """
+    Return the median of a non-empty list of numbers.
+    BUG: For even-length lists, this incorrectly returns the upper middle
+    element instead of the average of the two middle elements.
+    """
+    if not nums:
+        raise ValueError("nums must be non-empty")
+
+    s = sorted(nums)
+    n = len(s)
+    mid = n // 2
+
+    # ❌ BUG: even-length case should average s[mid-1] and s[mid]
+    return s[mid]
