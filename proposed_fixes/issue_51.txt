@@ -1,6 +1,6 @@
 Generated fix successful!
                     Tested 1 patches.Suggested patch:
-line 15------------------------------------------------------------------------
+line 15-------------------------------------------------------------------------------------------------------
 def median(nums):
     """
     Return the median of a non-empty list of numbers.
@@ -16,10 +16,12 @@ def median(nums):
 
     # ❌ BUG: even-length case should average s[mid-1] and s[mid]
     if n % 2 == 0:
+        # Even number of elements, average the two middle ones
         return (s[mid - 1] + s[mid]) / 2
     else:
+        # Odd number of elements, return the middle one
         return s[mid]
-line 15------------------------------------------------------------------------
+line 15-------------------------------------------------------------------------------------------------------
 Original buggy code description:
-The original code incorrectly returned `s[mid]` for all list lengths. For even-length lists, the median is the average of the two middle elements. The fix adds a conditional check: if the list length `n` is even, it returns the average of `s[mid-1]` and `s[mid]`; otherwise (for odd length), it returns `s[mid]` as before.
+The original code incorrectly returned only the upper middle element (s[mid]) for both odd and even length lists. For even-length lists, the median is the average of the two middle elements. The fix adds a conditional check: if the list length (n) is even, it calculates the average of s[mid-1] and s[mid]; otherwise (for odd length lists), it returns s[mid], which is correct.
 Good luck with your fix!

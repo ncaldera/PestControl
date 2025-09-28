@@ -1,0 +1,12 @@
+{
+  "original_code_path": "code.txt",
+  "fixed_code_path": "fixed_code.txt",
+  "patch_path": "patch.txt",
+  "why_path": "why.txt",
+  "context_files": [
+    "testing_chat/stats.py"
+  ],
+  "pytest_test_files": [
+    "testing_chat/test_stats.py"
+  ]
+}

@@ -50,6 +50,12 @@ def process_bug_report(file_path, config):
 
     # Remove original JSON so it's not processed again
     os.remove(file_path)
+    # Remove extracted directory
+    try:
+        shutil.rmtree(extracted_dir)
+        print(f"🗑️ Removed extracted directory: {extracted_dir}")
+    except Exception as e:
+        print(f"⚠️ Could not remove extracted directory: {extracted_dir} ({e})")
     print(f"✅ Finished {file_path}. Patch saved to {dest}")
 
 def main():

@@ -1,0 +1,1 @@
+The original code incorrectly returned only the upper middle element (s[mid]) for both odd and even length lists. For even-length lists, the median is the average of the two middle elements. The fix adds a conditional check: if the list length (n) is even, it calculates the average of s[mid-1] and s[mid]; otherwise (for odd length lists), it returns s[mid], which is correct.
