@@ -52,8 +52,9 @@ def apply_patch(temp_file_path, fixed_code_path, start, end):
     with open(temp_file_path, "w", encoding="utf-8") as f:
         f.writelines(original_lines)
 '''
-def file(success, num_runs, why, start_line, end_line, patch_contents, skip):
-    output_path = "output.txt"
+def file(success, num_runs, why, start_line, end_line, patch_contents, skip, folder_path):
+    
+    output_path = output_path = os.path.basename(folder_path) + ".txt"
 
     with open(output_path, "a", encoding="utf-8") as f:
         if success: 
@@ -207,4 +208,4 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         else: 
             print(f'''{Fore.RED}All generated fixes failed.{Style.RESET_ALL} 
                     Tested {num_runs - 1} patches.''')
-    return file(success, num_runs, why, start_line, end_line, patch_contents, skip_tests)
+    return file(success, num_runs, why, start_line, end_line, patch_contents, skip_tests, folder_path)
