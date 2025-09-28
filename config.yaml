@@ -1,2 +1,2 @@
-mode: "manual"   # options: "manual", "auto"
+mode: "auto"   # options: "manual", "auto"
 max_retries: 3
