@@ -5,6 +5,34 @@ from ai_fixer.gemini import running_gemini
 import json
 from datetime import datetime
 
+#helper for diffs
+def save_diff(original_file: str, fixed_file: str, issue_number: int) -> str:
+    """
+    Generate a unified diff between original and fixed file,
+    save it under proposed_fixes/issue_{n}.diff
+
+    Args:
+        original_file (str): Path to buggy file
+        fixed_file (str): Path to AI-fixed file
+        issue_number (int): GitHub issue number
+
+    Returns:
+        str: Path to the saved diff file
+    """
+    Path("proposed_fixes").mkdir(exist_ok=True)
+
+    out_path = f"proposed_fixes/issue_{issue_number}.diff"
+
+    result = subprocess.run(
+        ["git", "diff", "--no-index", original_file, fixed_file],
+        capture_output=True,
+        text=True
+    )
+
+    Path(out_path).write_text(result.stdout, encoding="utf-8")
+
+    return out_path
+
 #! takes gemini input, runs tests, delivers correct output
 def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool manual y/n, file_path dir
     success = False
@@ -102,6 +130,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
 
     #! output files: success or fail, tested num patches, patch contents, original code, fixed code, and why buggy
     output_path = os.path.basename(folder_path) + ".txt"
+    save_diff(original_code_path, fixed_code, issue_number=int(folder_path.split("issue")[-1]))
 
     patch_text = ""
     with open(fixed_code, "r", encoding="utf-8") as f:
