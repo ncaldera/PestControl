@@ -26,6 +26,8 @@ run again option? [did it work y/n -> rerun prompt]
 from colorama import Fore, Back, Style, init
 import json, shutil, subprocess, os, tempfile, sys
 from ai_fixer.gemini import running_gemini
+import json
+
 #! helper functions
 def create__copy(path):
     fd, temp_path = tempfile.mkstemp(suffix='.py')  # unique temp file
@@ -86,14 +88,14 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         context_files = [line.strip() for line in f if line.strip()]
     
     combined_json = running_gemini(original_code_path, context_files, description_path, test_cases_path)
-    input_data = json.loads(combined_json)
+    input_data = combined_json
 
     #! run tests
     num_runs = 1
     for i in range(num_loops):
         if i > 0:
             combined_json = running_gemini(original_code_path, context_files, description_path, test_cases_path)
-            input_data = json.loads(combined_json)
+            input_data = combined_json
         
         tests = input_data["tests"]
         fixed_code = input_data["fixed_code_path"] # just fixed code snippet
