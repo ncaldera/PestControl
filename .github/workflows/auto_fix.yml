@@ -54,6 +54,8 @@ jobs:
           else
             echo "✅ GEMINI_API_KEY is set (hidden)"
           fi
+      - name: Print environment variables (safe)
+        run: printenv | grep -i gemini
 
       - name: Run pipeline
         run: python pipeline_runner.py bug_reports/issue_${{ github.event.issue.number }}.json
