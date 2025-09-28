@@ -1,0 +1,2 @@
+All generated fixes failed. 
+                    Tested 3 patches.
