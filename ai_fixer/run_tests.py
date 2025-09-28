@@ -26,10 +26,51 @@ run again option? [did it work y/n -> rerun prompt]
 from colorama import Fore, Back, Style, init
 import json, shutil, subprocess, os, tempfile
 
+#! helper functions
+def create__copy(path):
+    fd, temp_path = tempfile.mkstemp(suffix='.py')  # unique temp file
+    os.close(fd)  # close file descriptor
+    shutil.copy2(path, temp_path)
+    return temp_path
+
+def apply_patch(temp_fixed_code, patch, start, end):
+    with open(temp_fixed_code, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    with open(temp_fixed_code, "r", encoding="utf-8") as f:
+        fixed_lines = f.readlines()
+
+    lines[start:end] = fixed_lines
+
+    with open(temp_fixed_code, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
+def file(success, num_runs, why, start_line, end_line, fixed_code, patch_contents):
+    output_path = "output.txt"
+
+    with open(output_path, "a", encoding="utf-8") as f:
+        if success: 
+            f.write(f'''Generated fix successful!
+                    Tested {num_runs} patches.
+                    
+                    Suggested patch:''')
+            width = shutil.get_terminal_size().columns
+            f.write(f"line {start_line}" + "-" * (width - 8) + "\n")
+            f.write(f"{patch_contents}\n")
+            f.write(f"line {end_line}" + "-" * (width - 8) + "\n")
+            f.write(f"Original buggy code description:\n{why}\n")
+            f.write("Good luck with your fix!")
+
+        else: 
+            f.write(f'''All generated fixes failed. 
+                    Tested {num_runs} patches.''')
+        
+
+#! main func
 def tester(num_loops, manual, folder_path): # int num loops, bool manual y/n, file_path dir
     success = False
 
-    #! SAVE ORIGINAL CODE FOR FOLLOWING INPUTS
+    #! saving original code path, first gemini run
     original_code_path = os.path.join(folder_path, "code_with_error.txt")
     context_files_path = os.path.join(folder_path, "context_files.txt")
     description_path = os.path.join(folder_path, "description_of_the_bug.txt")
@@ -44,14 +85,15 @@ def tester(num_loops, manual, folder_path): # int num loops, bool manual y/n, fi
     combined_json = running_gemini(original_code_path, context_files, description_path, test_cases_path)
     input_data = json.loads(combined_json)
 
-    #! RUN TESTS
+    #! run tests
+    num_runs = 1
     for i in range(num_loops):
         if i > 0:
             combined_json = running_gemini(original_code_path, context_files, description_path, test_cases_path)
             input_data = json.loads(combined_json)
         
         tests = input_data["tests"]
-        fixed_code = input_data["fixed_code_path"] # just fixed code
+        fixed_code = input_data["fixed_code_path"] # just fixed code snippet
         patch_path = input_data["patch_path"]
 
         patch_data = {}
@@ -61,8 +103,8 @@ def tester(num_loops, manual, folder_path): # int num loops, bool manual y/n, fi
                     key, value = line.split(":", 1)
                     patch_data[key.strip()] = value.strip()
 
-        start_line = int(patch_data.get("start_line"))
-        end_line = int(patch_data.get("end_line"))
+        start_line = int(patch_data.get("start_line")) - 1
+        end_line = int(patch_data.get("end_line")) - 1
         why = patch_data.get("why", "")
 
         temp_fixed_code = create__copy(original_code_path)
@@ -70,47 +112,35 @@ def tester(num_loops, manual, folder_path): # int num loops, bool manual y/n, fi
         apply_patch(temp_fixed_code, fixed_code, start_line, end_line)
 
         try:
-            #TODO run tests, if tests pass -> success = True
+            result = subprocess.run(["pytest", temp_fixed_code], capture_output=True, text=True)
+
             if result.returncode == 0: # all tests passed
                 success = True
                 break
             pass
+
         finally:
             os.remove(temp_fixed_code)
-            
+            num_runs += 1
+    
+    if manual:
+        with open(fixed_code, "r", encoding="utf-8") as f:
+            patch_contents = f.read()
 
-def create__copy(path):
-    fd, temp_path = tempfile.mkstemp(suffix='.py')  # unique temp file
-    os.close(fd)  # close file descriptor
-    shutil.copy2(path, temp_path)
-    return temp_path
+        if success: 
+            print(f'''{Fore.GREEN}Generated fix successful!{Style.RESET_ALL}
+                    Tested {num_runs} patches.
+                    
+                    Suggested patch:''')
+            width = shutil.get_terminal_size().columns
+            print(Fore.CYAN + f"line {start_line}" + "-" * (width - 8) + "\n")
+            print(f"{patch_contents}\n")
+            print(Fore.CYAN + f"line {end_line}" + "-" * (width - 8) + "\n")
+            print(f"Original buggy code description:\n{why}\n")
+            print(Fore.MAGENTA + "Good luck with your fix!")
 
-def apply_path()
+        else: 
+            print(f'''{Fore.RED}All generated fixes failed.{Style.RESET_ALL} 
+                    Tested {num_runs} patches.''')
 
-
-
-'''
-    #!PRINTING FIX!!! - if need be put in tester func
-    if success:
-        print(Fore.GREEN + "Generated fix successful!")
-
-        print()
-        #TODO parse patch and break up in order to print better
-
-        print(Style.BRIGHT + "Suggested patch: ")
-        width = shutil.get_terminal_size().columns
-        print(Style.RESET_ALL + f"line {start_line}" + "-" * (width - 8))
-        print(Fore.CYAN + patch)
-        print(f"line {end_line}" + "-" * (width - 8))
-
-        print()
-
-        print(Style.BRIGHT + "Patch description: ")
-        print(Style.RESET_ALL + why)
-    else:
-        print(Fore.RED + "All generated patches failed :")
-
-    again = input(Back.WHITE + "Run again? [y/n]: ")
-    if again.lower().startswith("y"):
-        tester()
-'''
+    return file(success, num_runs, why, start_line, end_line, fixed_code, patch_contents)
