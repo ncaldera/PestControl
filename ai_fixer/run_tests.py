@@ -130,7 +130,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
 
     #! output files: success or fail, tested num patches, patch contents, original code, fixed code, and why buggy
     output_path = os.path.basename(folder_path) + ".txt"
-    save_diff(original_code_path, fixed_code, issue_number=int(folder_path.split("issue")[-1]))
+    save_diff(original_code_path, fixed_code, issue_number=int(folder_path.split("issue_")[-1]))
 
     patch_text = ""
     with open(fixed_code, "r", encoding="utf-8") as f:
