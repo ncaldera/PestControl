@@ -51,6 +51,10 @@ jobs:
           else
             echo "✅ GEMINI_API_KEY is set (hidden)"
           fi
+      - name: Debug secrets
+        run: echo "✅ GEMINI_API_KEY is available"
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Run pipeline
         env:
