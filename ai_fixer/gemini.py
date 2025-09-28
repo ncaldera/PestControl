@@ -15,8 +15,12 @@ import google.generativeai as genai
 
 def load_model(model_name: str = "gemini-2.5-flash") -> genai.GenerativeModel:
     """Configure the API from environment and return a Gemini model instance."""
+    # Load local .env if it exists
     load_dotenv()
-    api_key = os.getenv("GEMINI_API_KEY")
+
+    # First priority: real environment (works in GitHub Actions)
+    api_key = os.environ.get("GEMINI_API_KEY")
+
     if not api_key:
         raise ValueError("❌ No GEMINI_API_KEY found in environment/.env")
     genai.configure(api_key=api_key)
