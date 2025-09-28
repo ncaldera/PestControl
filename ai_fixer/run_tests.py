@@ -45,15 +45,18 @@ def apply_patch(temp_fixed_code, patch, start, end):
     with open(temp_fixed_code, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-def file(success, num_runs, why, start_line, end_line, fixed_code, patch_contents):
+def file(success, num_runs, why, start_line, end_line, patch_contents, skip):
     output_path = "output.txt"
 
     with open(output_path, "a", encoding="utf-8") as f:
         if success: 
-            f.write(f'''Generated fix successful!
-                    Tested {num_runs} patches.
-                    
-                    Suggested patch:''')
+            if skip:
+                f.write(f"No test cases provided. Running in patch-only mode.")
+            else: 
+                f.write(f'''Generated fix successful!
+                    Tested {num_runs} patches.''')
+
+            f.write("Suggested patch:\n")
             width = shutil.get_terminal_size().columns
             f.write(f"line {start_line}" + "-" * (width - 8) + "\n")
             f.write(f"{patch_contents}\n")
@@ -114,11 +117,11 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         if skip_tests:
             if manual:
                 print(f"{Fore.YELLOW} No test cases provided. Running in patch-only mode.{Style.RESET_ALL}")
-            success = True  # treat patch generation as success
+
             patch_contents = ""
             with open(fixed_code, "r", encoding="utf-8") as f:
                 patch_contents = f.read()
-            return file(success, 1, why, start_line, end_line, fixed_code, patch_contents)
+            return file(success, 1, why, start_line, end_line, fixed_code, patch_contents, skip_tests)
 
         try:
             sys.path.insert(0, os.path.dirname(temp_fixed_code))
@@ -157,4 +160,4 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             print(f'''{Fore.RED}All generated fixes failed.{Style.RESET_ALL} 
                     Tested {num_runs - 1} patches.''')
 
-    return file(success, num_runs, why, start_line, end_line, fixed_code, patch_contents)
+    return file(success, num_runs, why, start_line, end_line, fixed_code, patch_contents, skip_tests)
