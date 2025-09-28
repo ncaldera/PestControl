@@ -1,7 +1,5 @@
-# MHacks2025
-🐛 Pest Control
-
-AI-powered bug fixing with test-driven validation and visual reports
+# 🐛 Pest Control
+## AI-powered bug fixing with test-driven validation and visual reports
 
 ## 📖 Overview
 Pest Control is a workflow for automatically detecting and repairing bugs in Python projects using LLMs (Gemini). It integrates with pytest to validate candidate fixes and generates human-readable reports. A Streamlit-based frontend allows you to browse and inspect results, including diffs between buggy and fixed code.
