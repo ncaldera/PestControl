@@ -78,6 +78,7 @@ def file(success, num_runs, why, start_line, end_line, patch_contents, skip):
 #! main func
 def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool manual y/n, file_path dir
     success = False
+    print(f"num_loops {num_loops}, manual {manual}, folder_path {folder_path}, skip_tests {skip_tests}")
 
     #! saving original code path, first gemini run
     original_code_path = os.path.join(folder_path, "code_with_error.txt")
@@ -94,6 +95,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
     combined_json = running_gemini(original_code_path, context_files, description_path, test_cases)
     input_data = combined_json
 
+    print(f"Input data keys: {list(input_data.keys())}")
     #! run tests
     num_runs = 1
     for i in range(num_loops):
@@ -140,6 +142,8 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
 
         try:
             sys.path.insert(0, os.path.dirname(temp_fixed_code))
+
+            print("here")
 
             result = subprocess.run(
                 ["pytest", *tests, "--tb=short"],
