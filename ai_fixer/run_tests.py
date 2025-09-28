@@ -151,8 +151,8 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
 
         #try:
         with open(fixed_code, "r", encoding="utf-8") as f:
-            fixed_code = f.read()
-        print(f"[DEBUG] fixed code: {fixed_code}")
+            fixed_code_out = f.read()
+        print(f"[DEBUG] fixed code: {fixed_code_out}")
 
         sys.path.insert(0, os.path.dirname(fixed_code))
         print(f"[DEBUG] sys.path: {sys.path}")
