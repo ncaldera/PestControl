@@ -1,3 +1,4 @@
+# ai_fixer/gemini.py
 import os
 import json
 import re
@@ -7,67 +8,28 @@ from typing import List, Union, Dict, Any, Tuple
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-# ----------------------------
-# 0) CONFIG & PLACEHOLDERS
-# ----------------------------
-
-
-# NOTE: may need to rearrange this, this is js reading in at the START of the program
-
-code_file_path = Path("./code.txt") # PLACEHOLDER CONTENT
-CODE_SNIPPET = code_file_path.read_text(encoding="utf-8").strip()
-
-# array of strings, each string is file path
-repo_file_paths = [
-    "utils/math_helpers.py",
-    "README.md"
-    # PLACEHOLDER CONTENT
-]
-# Build REPO_FILES as a dict {path: content}
-REPO_FILES = {}
-for fp in repo_file_paths:
-    path = Path(fp)
-    if path.exists():
-        REPO_FILES[str(path)] = path.read_text(encoding="utf-8")
-    else:
-        REPO_FILES[str(path)] = ""  # or handle missing files differently
-
-# array of strings, each string is file path
-# Where your pytest tests live (files or directories).
-pytest_file_paths = [
-    "tests/test_add.py",
-    "tests/test_math.py"
-    # PLACEHOLDER CONTENT
-]
-PYTEST_TARGETS = pytest_file_paths
-
-descript_file_path = Path("bug_reports/description.txt") # PLACEHOLDER CONTENT
-DESCRIPTION = descript_file_path.read_text(encoding="utf-8").strip()
-
-FIRST_RUN = True  # (kept: not used here yet, but preserved for future loop logic)
 
 # ----------------------------
-# 1) GEMINI SETUP
+# Helpers (no I/O at import time)
 # ----------------------------
-# NOTE: model is created once and reused.
-load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise ValueError("❌ No GEMINI_API_KEY found in .env file")
 
-genai.configure(api_key=api_key)
-MODEL_NAME = "gemini-2.5-flash"  # good balance for free tier
-model = genai.GenerativeModel(MODEL_NAME)
+def load_model(model_name: str = "gemini-2.5-flash") -> genai.GenerativeModel:
+    """Configure the API from environment and return a Gemini model instance."""
+    load_dotenv()
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("❌ No GEMINI_API_KEY found in environment/.env")
+    genai.configure(api_key=api_key)
+    return genai.GenerativeModel(model_name)
 
-# ----------------------------
-# 2) PYTEST EXECUTION (get failure context)
-# ----------------------------
-def run_pytest(pytest_targets: list[str] | None = None, extra_args: list[str] | None = None) -> tuple[int, str]:
+
+def run_pytest(pytest_targets: List[str] | None = None,
+               extra_args: List[str] | None = None) -> Tuple[int, str]:
     """
     Run pytest and return (exit_code, combined_output).
     Writes a JUnit XML for structured parsing if you want later.
     """
-    args = ["pytest", "-q", "--disable-warnings", "--maxfail=1", "--color=no", f"--junitxml=pytest_report.xml"]
+    args = ["pytest", "-q", "--disable-warnings", "--maxfail=1", "--color=no", "--junitxml=pytest_report.xml"]
     if extra_args:
         args.extend(extra_args)
     if pytest_targets:
@@ -77,20 +39,19 @@ def run_pytest(pytest_targets: list[str] | None = None, extra_args: list[str] | 
     output = (proc.stdout or "") + "\n" + (proc.stderr or "")
     return proc.returncode, output.strip()
 
-def condense_pytest_output(text: str, tail_lines: int = 120) -> str:
-    # Keep the prompt compact: include last N lines of the pytest output but show top traceback.
-    lines = text.splitlines()
-    return "\n".join(lines[-tail_lines:]) if len(lines) > tail_lines else text
 
-# ----------------------------
-# 3) PROMPT CONSTRUCTION (pytest-based)
-# ----------------------------
+def condense_pytest_output(text: str, tail_lines: int = 160) -> str:
+    # Keep the prompt compact: include last N lines of the pytest output but show top traceback.
+    lines = (text or "").splitlines()
+    return "\n".join(lines[-tail_lines:]) if len(lines) > tail_lines else (text or "")
+
+
 def build_prompt_for_pytest(
     code_snippet: str,
     pytest_output_snippet: str,
-    repo_files: dict[str, str],
+    repo_files: Dict[str, str],
     description: str | None,
-    pytest_targets: list[str] | None,
+    pytest_targets: List[str] | None,
     exit_code: int,
 ) -> str:
     repo_blob = "\n".join(
@@ -136,7 +97,7 @@ DO NOT include markdown fences, commentary, or any fields other than those keys.
 [/PYTEST_FAILURE_REPORT_SNIPPET]
 
 [DESCRIPTION]
-{description or ""}
+{(description or "").strip()}
 [/DESCRIPTION]
 
 [REPO_FILES]
@@ -146,14 +107,11 @@ DO NOT include markdown fences, commentary, or any fields other than those keys.
 ===== CONTEXT END =====
 """.strip()
 
-# ----------------------------
-# 5) ROBUST JSON EXTRACTION
-# ----------------------------
-def extract_json(text: str) -> dict:
-    def strict_load(t: str):
-        return json.loads(t)
+
+def extract_json(text: str) -> Dict[str, Any]:
+    """Robust JSON extraction from model output."""
     try:
-        return strict_load(text)
+        return json.loads(text)
     except Exception:
         pass
     fence = re.search(r"```json\s*(\{.*?\})\s*```", text, flags=re.S)
@@ -166,13 +124,23 @@ def extract_json(text: str) -> dict:
         return json.loads(candidate)
     raise ValueError("Model did not return JSON or JSON could not be parsed.")
 
+
 # ----------------------------
-# ORCHESTRATOR
+# Orchestrator (parameters only)
 # ----------------------------
-def running_gemini(original_code_path, context_files, description_path, test_files):
+
+def running_gemini(
+    original_code_path: Union[str, Path],
+    context_files: List[str],
+    description_path: Union[str, Path],
+    test_files: Union[str, List[str]],
+    *,
+    model_name: str = "gemini-2.5-flash",
+    temperature: float = 0.0,
+) -> Dict[str, Any]:
     """
     Orchestrate the full step:
-      - read inputs,
+      - read inputs (from parameters only),
       - run pytest & condense,
       - build prompt,
       - call Gemini,
@@ -181,102 +149,90 @@ def running_gemini(original_code_path, context_files, description_path, test_fil
       - write combined_patch.json,
       - return combined JSON.
     """
-    # --- Read inputs (use args so this function can be reused; placeholders remain at top) ---
-    code_snippet = Path(original_code_path).read_text(encoding="utf-8").strip()
-    description  = Path(description_path).read_text(encoding="utf-8").strip() if Path(description_path).exists() else ""
-    repo_files   = {str(Path(fp)): (Path(fp).read_text(encoding="utf-8") if Path(fp).exists() else "") for fp in (context_files or [])}
+    # ---- Validate & read inputs ----
+    original_code_path = Path(original_code_path)
+    if not original_code_path.exists():
+        raise FileNotFoundError(f"original_code_path not found: {original_code_path.resolve()}")
+    code_snippet = original_code_path.read_text(encoding="utf-8").strip()
 
-    # Normalize pytest targets
+    description = ""
+    description_path = Path(description_path)
+    if description_path.exists():
+        description = description_path.read_text(encoding="utf-8").strip()
+
+    repo_files: Dict[str, str] = {}
+    for fp in (context_files or []):
+        p = Path(fp)
+        repo_files[str(p)] = p.read_text(encoding="utf-8") if p.exists() else ""
+
     if isinstance(test_files, str):
         pytest_targets = [test_files]
     else:
         pytest_targets = list(test_files or [])
 
-    # --- Run pytest & condense using your functions ---
-    exit_code, PYTEST_OUTPUT = run_pytest(pytest_targets)
-    PYTEST_OUTPUT_SNIPPET = condense_pytest_output(PYTEST_OUTPUT, tail_lines=160)
+    # ---- Run pytest & condense ----
+    exit_code, pytest_output = run_pytest(pytest_targets)
+    pytest_output_snippet = condense_pytest_output(pytest_output, tail_lines=160)
 
-    # --- Build prompt using your function ---
+    # ---- Build prompt & call model ----
     prompt = build_prompt_for_pytest(
         code_snippet=code_snippet,
-        pytest_output_snippet=PYTEST_OUTPUT_SNIPPET,
+        pytest_output_snippet=pytest_output_snippet,
         repo_files=repo_files,
         description=description,
         pytest_targets=pytest_targets,
         exit_code=exit_code,
     )
 
-    # --- Call Gemini (kept: your model instance) ---
+    model = load_model(model_name=model_name)
     generation_config = {
-        "temperature": 0.0,
+        "temperature": temperature,
         "response_mime_type": "application/json",
     }
     response = model.generate_content(prompt, generation_config=generation_config)
     raw_text = response.text or ""
 
-    # --- Parse model JSON using your extractor ---
+    # ---- Parse JSON from model ----
     data = extract_json(raw_text)
     for key in ["SuggestedFixedCode", "ExplanationOfFix", "LineNumberRangesToEdit"]:
         if key not in data:
             raise ValueError(f"JSON missing required key: {key}")
 
-    fixed_code  = data["SuggestedFixedCode"]
+    fixed_code = data["SuggestedFixedCode"]
     explanation = data["ExplanationOfFix"]
-    ranges      = data["LineNumberRangesToEdit"]  # list[{"start": int, "end": int, "reason": str}]
+    ranges = data["LineNumberRangesToEdit"]  # list[{start,end,reason}]
 
-    # ----------------------------
-    # 6) WRITE FILES: fixed_code.txt, why.txt, patch.txt
-    # ----------------------------
+    # ---- Write artifacts to "." ----
     out_dir = Path(".")
-    fixed_code_path     = out_dir / "fixed_code.txt"
-    why_path            = out_dir / "why.txt"
-    patch_path          = out_dir / "patch.txt"
-    original_copy_path  = out_dir / "code.txt"  # local copy of original snippet (for downstream tools)
 
-    original_copy_path.write_text(code_snippet, encoding="utf-8")
+    code_copy_path = out_dir / "code.txt"          # local copy for downstream tools
+    fixed_code_path = out_dir / "fixed_code.txt"
+    why_path = out_dir / "why.txt"
+    patch_path = out_dir / "patch.txt"
+
+    code_copy_path.write_text(code_snippet, encoding="utf-8")
     fixed_code_path.write_text(fixed_code, encoding="utf-8")
     why_path.write_text(explanation, encoding="utf-8")
 
-    # Write patch.txt (all ranges + why). Kept your requested flat format.
-    lines = []
+    patch_lines = []
     for r in (ranges or []):
-        lines.append(f"start line: {r.get('start', '')}")
-        lines.append(f"end line: {r.get('end', '')}")
-    # end with the why (explanation of the code fix)
-    lines.append(f"why: {explanation.strip()}")
+        patch_lines.append(f"start line: {r.get('start', '')}")
+        patch_lines.append(f"end line: {r.get('end', '')}")
+    patch_lines.append(f"why: {explanation.strip()}")
+    patch_path.write_text("\n".join(patch_lines), encoding="utf-8")
 
-    patch_contents = "\n".join(lines)
-    patch_path.write_text(patch_contents, encoding="utf-8")
-
-    print("✅ Wrote:")
-    print(f" - {fixed_code_path.resolve()}")
-    print(f" - {why_path.resolve()}")
-    print(f" - {patch_path.resolve()}")
-
-    # ----------------------------
-    # 7) COMBINE INTO JSON (paths only)
-    # ----------------------------
-    combined = { # what to send to the test runner (maya)
-        "original_code_path": str(original_copy_path),
+    # ---- Combined JSON (paths only) ----
+    combined = {
+        "original_code_path": str(code_copy_path),
         "fixed_code_path": str(fixed_code_path),
         "patch_path": str(patch_path),
         "why_path": str(why_path),
-        "context_files": list(repo_files.keys()),   # repo context paths only
-        "pytest_test_files": pytest_targets          # the test files you passed to pytest
+        "context_files": list(repo_files.keys()),     # paths only
+        "pytest_test_files": pytest_targets,          # tests passed in
     }
 
     combined_json_path = out_dir / "combined_patch.json"
-    with combined_json_path.open("w", encoding="utf-8") as f:
-        json.dump(combined, f, indent=2)
+    combined_json_path.write_text(json.dumps(combined, indent=2), encoding="utf-8")
 
-    print("✅ Wrote combined JSON to", combined_json_path.resolve())
     return combined
 
-""" 
-Sample Usage:
-running_gemini(
-        original_code_path=code_file_path,
-        context_files=repo_file_paths,
-        description_path=descript_file_path,
-        test_files=pytest_file_paths,
-    ) """
