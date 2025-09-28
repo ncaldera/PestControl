@@ -97,7 +97,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             combined_json = running_gemini(original_code_path, context_files, description_path, test_cases_path)
             input_data = combined_json
         
-        tests = input_data["tests"]
+        tests = input_data["pytest_test_files"]
         fixed_code = input_data["fixed_code_path"] # just fixed code snippet
         patch_path = input_data["patch_path"]
 
