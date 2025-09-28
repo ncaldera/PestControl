@@ -101,7 +101,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         num_runs += 1
 
     #! output files: success or fail, tested num patches, patch contents, original code, fixed code, and why buggy
-    output_path = "output.txt"
+    output_path = os.path.basename(folder_path) + ".txt"
 
     patch_text = ""
     with open(fixed_code, "r", encoding="utf-8") as f:
