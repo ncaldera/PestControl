@@ -1,43 +1,59 @@
 import json
 import re
 from pathlib import Path
+import os
 
-# Path to the downloaded JSON issue file
-json_file = "bug_reports/issue_7.json"
+def safe_write(out_dir: str, filename: str, content: str, default: str = ""):
+    """Safely write content to file, using default if empty."""
+    text = content.strip() if content else default
+    path = Path(out_dir) / filename
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    return path
 
-# Output folder for text files
-output_dir = Path("extracted_reports")
-output_dir.mkdir(exist_ok=True)
+def extract_bug_report(json_file: str) -> str:
+    """
+    Extracts sections from a GitHub issue JSON into separate text files.
+    
+    Args:
+        json_file (str): Path to the bug report JSON file.
+    
+    Returns:
+        str: Path to the directory with extracted text files.
+    """
+    base_name = os.path.splitext(os.path.basename(json_file))[0]
+    out_dir = os.path.join("extracted", base_name)
+    os.makedirs(out_dir, exist_ok=True)
 
-# Load the JSON issue file
-with open(json_file, "r", encoding="utf-8") as f:
-    issue = json.load(f)
+    # Load the JSON
+    with open(json_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-body = issue["body"]
+    body = data.get("body", "")
 
-# Define the fields we care about (order matters)
-fields = [
-    "Description of the bug",
-    "Test cases",
-    "Code with error",
-    "Context Files"
-]
+    # Use regex to capture "### Heading" and its text
+    sections = re.split(r"(?m)^### ", body)
+    parsed = {}
 
-# Regex pattern to split by headings (### ...)
-pattern = r"### (.+?)\n\n(.*?)(?=\n### |\Z)"
-matches = re.findall(pattern, body, re.DOTALL)
+    for section in sections:
+        if not section.strip():
+            continue
+        lines = section.strip().splitlines()
+        heading = lines[0].strip().lower().replace(" ", "_")
+        content = "\n".join(lines[1:]).strip()
+        parsed[heading] = content
 
-# Save matched sections
-for heading, content in matches:
-    heading = heading.strip()
-    if heading in fields:
-        # Clean up content (remove placeholder if empty)
-        text = content.strip()
-        if text == "_No response_":
-            text = ""
-        
-        # Save into a separate .txt file
-        filename = output_dir / f"{heading.replace(' ', '_').lower()}.txt"
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(text)
-        print(f"✅ Saved {heading} -> {filename}")
+    # Map headings to file names we care about
+    mapping = {
+        "description_of_the_bug": ("description.txt", "No description provided."),
+        "test_cases": ("test_cases.txt", "# No tests provided"),
+        "context_files": ("context_files.txt", "# No context files listed"),
+        "code_with_error": ("code_with_error.txt", "# No code snippet given"),
+    }
+
+    for key, (filename, default) in mapping.items():
+        content = parsed.get(key, "")
+        safe_write(out_dir, filename, content, default)
+
+    print(f"✅ Extracted fields saved to {out_dir}")
+    return out_dir
