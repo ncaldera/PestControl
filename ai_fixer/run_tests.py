@@ -150,26 +150,26 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
 
 
         #try:
-            sys.path.insert(0, os.path.dirname(fixed_code))
-            print(f"[DEBUG] sys.path: {sys.path}")
-            print(f"[DEBUG] Running pytest with args: ['pytest', *tests, '--tb=short']")
-            result = subprocess.run(
-                ["pytest", *tests, "--tb=short"],
-                capture_output = True,
-                text = True)
-            print(f"[DEBUG] Pytest stdout:\n{result.stdout}")
-            print(f"[DEBUG] Pytest stderr:\n{result.stderr}")
-            print(f"[DEBUG] Pytest returncode: {result.returncode}")
+        sys.path.insert(0, os.path.dirname(fixed_code))
+        print(f"[DEBUG] sys.path: {sys.path}")
+        print(f"[DEBUG] Running pytest with args: ['pytest', *tests, '--tb=short']")
+        result = subprocess.run(
+            ["pytest", *tests, "--tb=short"],
+            capture_output = True,
+            text = True)
+        print(f"[DEBUG] Pytest stdout:\n{result.stdout}")
+        print(f"[DEBUG] Pytest stderr:\n{result.stderr}")
+        print(f"[DEBUG] Pytest returncode: {result.returncode}")
 
-            if result.returncode == 0: # all tests passed
-                success = True
-                break
-            pass
+        if result.returncode == 0: # all tests passed
+            success = True
+            break
+        pass
 
         #finally:
             #print(f"[DEBUG] Removing temp file: {temp_fixed_code}")
             #os.remove(temp_fixed_code)
-            num_runs += 1
+        num_runs += 1
 
     with open(fixed_code, "r", encoding="utf-8") as f:
             patch_contents = f.read()
