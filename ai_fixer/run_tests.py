@@ -25,6 +25,7 @@ run again option? [did it work y/n -> rerun prompt]
 '''
 from colorama import Fore, Back, Style, init
 import json, shutil, subprocess, os, tempfile, sys
+from pathlib import Path
 from ai_fixer.gemini import running_gemini
 import json
 
@@ -78,7 +79,6 @@ def file(success, num_runs, why, start_line, end_line, patch_contents, skip):
 #! main func
 def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool manual y/n, file_path dir
     success = False
-    print(f"num_loops {num_loops}, manual {manual}, folder_path {folder_path}, skip_tests {skip_tests}")
 
     #! saving original code path, first gemini run
     original_code_path = os.path.join(folder_path, "code_with_error.txt")
@@ -88,11 +88,14 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
 
     with open(test_cases_path, "r", encoding="utf-8") as f:
         test_cases = [line.strip() for line in f if line.strip()]
-    
+    print(f"[DEBUG] Test cases: {test_cases}")
+
     with open(context_files_path, "r", encoding="utf-8") as f:
         context_files = [line.strip() for line in f if line.strip()]
-    
+    print(f"[DEBUG] Context files: {context_files}")
+
     combined_json = running_gemini(original_code_path, context_files, description_path, test_cases)
+    print(f"[DEBUG] Gemini output: {json.dumps(combined_json, indent=2)}")
     input_data = combined_json
 
     num_runs = 1
@@ -111,6 +114,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
                 if ":" in line:
                     key, value = line.split(":", 1)
                     patch_data[key.strip()] = value.strip()
+        print(f"[DEBUG] Patch data: {patch_data}")
 
         raw_start = patch_data.get("start_line", patch_data.get("start_line"))
         raw_end   = patch_data.get("end_line",   patch_data.get("end_line"))
@@ -122,10 +126,14 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         end_line   = int(raw_end)   - 1
         why = patch_data.get("why", "")
 
-
+        print(f"[DEBUG] Applying patch: start_line={start_line}, end_line={end_line}")
         temp_fixed_code = create__copy(original_code_path)
+        print(f"[DEBUG] Temp fixed code path: {temp_fixed_code}")
 
         apply_patch(temp_fixed_code, fixed_code, start_line, end_line)
+        with open(temp_fixed_code, "r", encoding="utf-8") as f:
+            temp_contents = f.read()
+        print(f"[DEBUG] Applied patch to temp file: {temp_fixed_code}\n{temp_contents}")
 
         if skip_tests:
             if manual:
@@ -140,13 +148,15 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
 
         try:
             sys.path.insert(0, os.path.dirname(temp_fixed_code))
-
-            print("here")
-
+            print(f"[DEBUG] sys.path: {sys.path}")
+            print(f"[DEBUG] Running pytest with args: ['pytest', *tests, '--tb=short']")
             result = subprocess.run(
                 ["pytest", *tests, "--tb=short"],
                 capture_output = True,
                 text = True)
+            print(f"[DEBUG] Pytest stdout:\n{result.stdout}")
+            print(f"[DEBUG] Pytest stderr:\n{result.stderr}")
+            print(f"[DEBUG] Pytest returncode: {result.returncode}")
 
             if result.returncode == 0: # all tests passed
                 success = True
@@ -154,6 +164,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             pass
 
         finally:
+            print(f"[DEBUG] Removing temp file: {temp_fixed_code}")
             os.remove(temp_fixed_code)
             num_runs += 1
 
