@@ -139,7 +139,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             print(Fore.CYAN + Style.BRIGHT + "Suggested patch:" + Style.RESET_ALL)
             width = shutil.get_terminal_size().columns
             print(Fore.CYAN + f"line {start_line}" + "-" * (width - 8) + Style.RESET_ALL + "\n")
-            print(Fore.LIGHTCYAN_EX + patch_contents + Style.RESET_ALL + "\n")
+            print(Fore.LIGHTCYAN_EX + patch_text + Style.RESET_ALL + "\n")
             print(Fore.CYAN + f"line {end_line}" + "-" * (width - 8) + Style.RESET_ALL + "\n")
             print(Fore.MAGENTA + "Original buggy code description:" + Style.RESET_ALL)
             print(why + "\n")
