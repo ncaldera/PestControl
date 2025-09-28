@@ -153,7 +153,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         with open(fixed_code, "r", encoding="utf-8") as f:
             fixed_code_out = f.read()
         
-        orig_file = "testing_chat/stats.py"  # relative path from repo root
+        orig_file = original_file_path # relative path from repo root
 
         shutil.copy(orig_file, orig_file + ".bak")
         with open(orig_file, "w", encoding="utf-8") as f:
