@@ -47,9 +47,9 @@ def extract_bug_report(json_file: str) -> str:
     mapping = {
         "description_of_the_bug": ("description.txt", "No description provided."),
         "test_cases": ("test_cases.txt", "# No tests provided"),
-        "context_files": ("context_files.txt", "# No context files listed"),
         "code_with_error": ("code_with_error.txt", "# No code snippet given"),
         "code_with_error_path": ("code_with_error.txt", "# No code snippet given"),
+        "context_files": ("context_files.txt", "# No context files listed"),
     }
 
     for key, (filename, default) in mapping.items():

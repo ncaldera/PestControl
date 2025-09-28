@@ -80,8 +80,12 @@ def file(success, num_runs, why, start_line, end_line, patch_contents, skip):
 #! main func
 def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool manual y/n, file_path dir
     success = False
+    print(f"[DEBUG] Listing files in folder_path: {folder_path}")
+    for fname in os.listdir(folder_path):
+        print(f"  - {fname}")
 
     #! saving original code path, first gemini run
+
     original_code_path = os.path.join(folder_path, "code_with_error.txt")
     context_files_path = os.path.join(folder_path, "context_files.txt")
     description_path = os.path.join(folder_path, "description_of_the_bug.txt")
