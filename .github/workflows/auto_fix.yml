@@ -1,18 +1,40 @@
 name: Auto AI Bug Fixer
 
 on:
-  workflow_dispatch:     # allow manual trigger
-  push:
-    paths:
-      - "bug_reports/*.json"   # auto-trigger when new bug reports are added
+  issues:
+    types: [opened]
+  workflow_dispatch:   # still allow manual run
+
+permissions:
+  contents: write
+  issues: read
 
 jobs:
-  ai-bug-fix:
+  save-and-fix:
+    if: github.actor != 'github-actions[bot]' && contains(github.event.issue.body, '- [x] Use AI powered fix')
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      - name: Save issue as JSON
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const issue = context.payload.issue;
+            const path = `bug_reports/issue_${issue.number}.json`;
+            fs.mkdirSync("bug_reports", { recursive: true });
+            fs.writeFileSync(path, JSON.stringify(issue, null, 2));
+
+      - name: Commit and push JSON
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add bug_reports/
+          git commit -m "Auto-save bug report #${{ github.event.issue.number }}: ${{ github.event.issue.title }}" || echo "No changes to commit"
+          git push
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -22,8 +44,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run AI Bug Fixer
+      - name: Run pipeline
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          python pipeline_runner.py
+          python pipeline_runner.py bug_reports/issue_${{ github.event.issue.number }}.json

@@ -25,7 +25,7 @@ run again option? [did it work y/n -> rerun prompt]
 '''
 from colorama import Fore, Back, Style, init
 import json, shutil, subprocess, os, tempfile, sys
-
+from gemini import running_gemini
 #! helper functions
 def create__copy(path):
     fd, temp_path = tempfile.mkstemp(suffix='.py')  # unique temp file

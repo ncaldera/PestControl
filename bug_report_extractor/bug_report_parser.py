@@ -22,7 +22,7 @@ def extract_bug_report(json_file: str) -> str:
         str: Path to the directory with extracted text files.
     """
     base_name = os.path.splitext(os.path.basename(json_file))[0]
-    out_dir = os.path.join("extracted", base_name)
+    out_dir = os.path.join("extracted_reports", base_name)
     os.makedirs(out_dir, exist_ok=True)
 
     # Load the JSON
