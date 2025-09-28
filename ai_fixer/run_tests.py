@@ -153,11 +153,11 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         finally:
             os.remove(temp_fixed_code)
             num_runs += 1
+
+    with open(fixed_code, "r", encoding="utf-8") as f:
+            patch_contents = f.read()
     
     if manual:
-        with open(fixed_code, "r", encoding="utf-8") as f:
-            patch_contents = f.read()
-
         if success: 
             print(f'''{Fore.GREEN}Generated fix successful!{Style.RESET_ALL}
                     Tested {num_runs} patches.
