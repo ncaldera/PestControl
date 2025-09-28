@@ -113,7 +113,6 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         "fixed_file": fixed_code if Path(fixed_code).exists() else "",
         "status": "Success" if success else ("Skipped tests" if skip_tests else "Fail"),
         "start_line": start_line,
-        "end_line": end_line,
         "why": why,
         "patch": patch_text,
         "timestamp": datetime.now().isoformat()
@@ -124,7 +123,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         f.write(f"Original: {report['original_file']}\n")
         f.write(f"Fixed: {report['fixed_file']}\n")
         f.write(f"Status: {report['status']}\n")
-        f.write(f"Lines: {report['start_line']}-{report['end_line']}\n")
+        f.write(f"Line: {report['start_line']}\n")
         f.write(f"Why: {report['why']}\n")
         f.write("Patch:\n")
         f.write(f"{report['patch']}\n")
@@ -140,7 +139,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             width = shutil.get_terminal_size().columns
             print(Fore.CYAN + f"line {start_line}" + "-" * (width - 8) + Style.RESET_ALL + "\n")
             print(Fore.LIGHTCYAN_EX + patch_text + Style.RESET_ALL + "\n")
-            print(Fore.CYAN + f"line {end_line}" + "-" * (width - 8) + Style.RESET_ALL + "\n")
+            print(Fore.CYAN + "-" * (width - 6) + Style.RESET_ALL + "\n")
             print(Fore.MAGENTA + "Original buggy code description:" + Style.RESET_ALL)
             print(why + "\n")
             print(Fore.BLUE + Style.BRIGHT + "Good luck with your fix!" + Style.RESET_ALL)
