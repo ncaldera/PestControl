@@ -95,13 +95,6 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
     combined_json = running_gemini(original_code_path, context_files, description_path, test_cases)
     input_data = combined_json
 
-    print("Input data keys:", list(input_data.keys()))
-
-    # Print each key and its value
-    for key, value in input_data.items():
-        print(f"\n--- {key} ---")
-        print(value)
-    #! run tests
     num_runs = 1
     for i in range(num_loops):
         if i > 0:
