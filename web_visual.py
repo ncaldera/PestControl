@@ -61,41 +61,45 @@ st.markdown(
 def parse_report_txt(file_path: Path):
     data = {
         "file": file_path.name,
-        "status": "Unknown",
+        "status": None,
         "patch": None,
         "start_line": None,
         "end_line": None,
         "why": None,
         "timestamp": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
-        "raw": None,
     }
     
-    with open(file_path, "r") as fh:
+    with open(file_path, "r", encoding="utf-8") as fh:
         content = fh.read()
-        data["raw"] = content
+
+    # Split report sections
+    report_blocks = re.findall(r"=== REPORT START ===(.*?)=== REPORT END ===", content, re.S)
+    if not report_blocks:
+        return data  # fallback if format doesn't match
+
+    # Parse the first (or only) report block
+    report_text = report_blocks[0]
 
     # Status
-    if "Generated fix successful!" in content:
-        data["status"] = "Success"
-    elif "All generated fixes failed" in content:
-        data["status"] = "Fail"
+    status_match = re.search(r"Status:\s*(\w+)", report_text)
+    if status_match:
+        data["status"] = status_match.group(1)
 
-    # Extract line numbers
-    line_matches = re.findall(r"line (\d+)-+", content)
-    if line_matches:
-        data["start_line"] = int(line_matches[0])
-        if len(line_matches) > 1:
-            data["end_line"] = int(line_matches[-1])
+    # Start and end lines
+    lines_match = re.search(r"Lines:\s*(\d+)-(\d+)", report_text)
+    if lines_match:
+        data["start_line"] = int(lines_match.group(1))
+        data["end_line"] = int(lines_match.group(2))
 
-    # Extract patch
-    patch_match = re.search(r"Suggested patch:\n(.*?)line \d+", content, re.S)
-    if patch_match:
-        data["patch"] = patch_match.group(1).strip()
-
-    # Extract "why"
-    why_match = re.search(r"Original buggy code description:\n(.*?)\nGood luck", content, re.S)
+    # Why
+    why_match = re.search(r"Why:\s*(.*?)\nPatch:", report_text, re.S)
     if why_match:
         data["why"] = why_match.group(1).strip()
+
+    # Patch
+    patch_match = re.search(r"Patch:\n(.*?)\nFixed:", report_text, re.S)
+    if patch_match:
+        data["patch"] = patch_match.group(1).strip()
 
     return data
 
@@ -160,3 +164,5 @@ else:
                 """,
                 unsafe_allow_html=True
             )
+
+
