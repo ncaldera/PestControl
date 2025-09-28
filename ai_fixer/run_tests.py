@@ -73,6 +73,7 @@ def file(success, num_runs, why, start_line, end_line, patch_contents, skip):
             f.write(f'''All generated fixes failed. 
                     Tested {num_runs - 1} patches.''')
         
+    return output_path
 
 #! main func
 def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool manual y/n, file_path dir
