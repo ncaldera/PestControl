@@ -191,6 +191,7 @@ def running_gemini(
     }
     response = model.generate_content(prompt, generation_config=generation_config)
     raw_text = response.text or ""
+    print("Model raw response:", raw_text)
 
     # ---- Parse JSON from model ----
     data = extract_json(raw_text)
