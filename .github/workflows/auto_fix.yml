@@ -46,7 +46,7 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
-        
+
       - name: Debug secrets
         run: echo "✅ GEMINI_API_KEY is available"
         env:
@@ -64,3 +64,15 @@ jobs:
 
       - name: Run pipeline
         run: python pipeline_runner.py bug_reports/issue_${{ github.event.issue.number }}.json
+
+      - name: Commit and push extracted reports
+        run: |
+          git add extracted_reports/
+          git commit -m "Add extracted reports for issue ${{ github.event.issue.number }}" || echo "No changes to commit"
+          git push
+
+      - name: Commit and push proposed fixes
+        run: |
+          git add proposed_fixes/
+          git commit -m "Add proposed fixes for issue ${{ github.event.issue.number }}" || echo "No changes to commit"
+          git push
