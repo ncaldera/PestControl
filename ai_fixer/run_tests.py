@@ -134,19 +134,19 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
     #! prints to terminal if manual selected
     if manual:
         if success: 
-            print(f'''{Fore.GREEN}Generated fix successful!{Style.RESET_ALL}
-                    Tested {num_runs} patches.
-                    
-                    Suggested patch:''')
+            print(Fore.GREEN + Style.BRIGHT + "Generated fix successful!" + Style.RESET_ALL)
+            print(Fore.YELLOW + f"Tested {num_runs} patches." + Style.RESET_ALL)
+            print(Fore.CYAN + Style.BRIGHT + "Suggested patch:" + Style.RESET_ALL)
             width = shutil.get_terminal_size().columns
-            print(Fore.CYAN + f"line {start_line}" + "-" * (width - 8) + "\n")
-            print(f"{patch_contents}\n")
-            print(Fore.CYAN + f"line {end_line}" + "-" * (width - 8) + "\n")
-            print(f"Original buggy code description:\n{why}\n\n")
-            print(Fore.MAGENTA + "Good luck with your fix!")
+            print(Fore.CYAN + f"line {start_line}" + "-" * (width - 8) + Style.RESET_ALL + "\n")
+            print(Fore.LIGHTCYAN_EX + patch_contents + Style.RESET_ALL + "\n")
+            print(Fore.CYAN + f"line {end_line}" + "-" * (width - 8) + Style.RESET_ALL + "\n")
+            print(Fore.MAGENTA + "Original buggy code description:" + Style.RESET_ALL)
+            print(why + "\n")
+            print(Fore.BLUE + Style.BRIGHT + "Good luck with your fix!" + Style.RESET_ALL)
 
         else: 
-            print(f'''{Fore.RED}All generated fixes failed. :({Style.RESET_ALL} 
-                    Tested {num_runs - 1} patches.''')
+            print(Fore.RED + Style.BRIGHT + "All generated fixes failed. :(" + Style.RESET_ALL)
+            print(Fore.YELLOW + f"Tested {num_runs} patches." + Style.RESET_ALL)
             
     return output_path
