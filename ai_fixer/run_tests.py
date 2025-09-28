@@ -152,21 +152,12 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         #try
         with open(fixed_code, "r", encoding="utf-8") as f:
             fixed_code_out = f.read()
+        
+        orig_file = "testing_chat/stats.py"  # relative path from repo root
 
-        # Create a temp dir
-        tmpdir = tempfile.mkdtemp()
-
-        # Recreate the package folder structure (testing_chat/)
-        pkg_dir = os.path.join(tmpdir, "testing_chat")
-        os.makedirs(pkg_dir, exist_ok=True)
-
-        # Write patched version into correct location
-        patched_file = os.path.join(pkg_dir, "stats.py")
-        with open(patched_file, "w", encoding="utf-8") as f:
+        shutil.copy(orig_file, orig_file + ".bak")
+        with open(orig_file, "w", encoding="utf-8") as f:
             f.write(fixed_code_out)
-
-        # Prepend temp dir to sys.path so `import testing_chat.stats` hits our patched copy
-        sys.path.insert(0, tmpdir)
 
         print(f"[DEBUG] sys.path: {sys.path}")
         print(f"[DEBUG] Running pytest with args: ['pytest', *tests, '--tb=short']")
@@ -174,6 +165,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             ["pytest", *tests, "--tb=short"],
             capture_output = True,
             text = True)
+        shutil.move(orig_file + ".bak", orig_file)
         print(f"[DEBUG] Pytest stdout:\n{result.stdout}")
         print(f"[DEBUG] Pytest stderr:\n{result.stderr}")
         print(f"[DEBUG] Pytest returncode: {result.returncode}")
