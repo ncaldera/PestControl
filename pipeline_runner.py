@@ -64,7 +64,21 @@ def main():
 
     if mode == "manual":
         print("Manual mode. Run extractor + repair manually.")
-        print(f"Available reports: {bug_reports}")
+        print(f"Available reports:")
+        for idx, report in enumerate(bug_reports):
+            print(f"  [{idx}] {report}")
+        if not bug_reports:
+            print("No bug reports to process.")
+            return
+        try:
+            selection = int(input("Enter the number of the bug report to process: "))
+            if selection < 0 or selection >= len(bug_reports):
+                print("Invalid selection.")
+                return
+        except Exception:
+            print("Invalid input.")
+            return
+        process_bug_report(bug_reports[selection], config)
     else:
         # Process the first available JSON file
         process_bug_report(bug_reports[0], config)
