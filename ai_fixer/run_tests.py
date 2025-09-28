@@ -24,7 +24,7 @@ run again option? [did it work y/n -> rerun prompt]
 
 '''
 from colorama import Fore, Back, Style, init
-import json, shutil, subprocess, os, tempfile
+import json, shutil, subprocess, os, tempfile, sys
 
 #! helper functions
 def create__copy(path):
@@ -63,7 +63,7 @@ def file(success, num_runs, why, start_line, end_line, fixed_code, patch_content
 
         else: 
             f.write(f'''All generated fixes failed. 
-                    Tested {num_runs} patches.''')
+                    Tested {num_runs - 1} patches.''')
         
 
 #! main func
@@ -112,7 +112,12 @@ def tester(num_loops, manual, folder_path): # int num loops, bool manual y/n, fi
         apply_patch(temp_fixed_code, fixed_code, start_line, end_line)
 
         try:
-            result = subprocess.run(["pytest", temp_fixed_code], capture_output=True, text=True)
+            sys.path.insert(0, os.path.dirname(temp_fixed_code))
+
+            result = subprocess.run(
+                ["pytest", *tests, "--tb=short"],
+                capture_output = True,
+                text = True)
 
             if result.returncode == 0: # all tests passed
                 success = True
@@ -141,6 +146,6 @@ def tester(num_loops, manual, folder_path): # int num loops, bool manual y/n, fi
 
         else: 
             print(f'''{Fore.RED}All generated fixes failed.{Style.RESET_ALL} 
-                    Tested {num_runs} patches.''')
+                    Tested {num_runs - 1} patches.''')
 
     return file(success, num_runs, why, start_line, end_line, fixed_code, patch_contents)
