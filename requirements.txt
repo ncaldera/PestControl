@@ -3,3 +3,4 @@ colorama
 pytest
 pyyaml
 google-generativeai
+python-dotenv
