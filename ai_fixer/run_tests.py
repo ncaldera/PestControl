@@ -30,6 +30,7 @@ from ai_fixer.gemini import running_gemini
 import json
 
 #! helper functions
+'''
 def create__copy(path):
     fd, temp_path = tempfile.mkstemp(suffix='.py')  # unique temp file
     os.close(fd)  # close file descriptor
@@ -50,7 +51,7 @@ def apply_patch(temp_file_path, fixed_code_path, start, end):
 
     with open(temp_file_path, "w", encoding="utf-8") as f:
         f.writelines(original_lines)
-
+'''
 def file(success, num_runs, why, start_line, end_line, patch_contents, skip):
     output_path = "output.txt"
 
@@ -105,7 +106,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             input_data = combined_json
         
         tests = input_data["pytest_test_files"]
-        fixed_code = input_data["fixed_code_path"] # just fixed code snippet
+        fixed_code = input_data["fixed_code_path"] #whole fixed code
         patch_path = input_data["patch_path"]
 
         patch_data = {}
@@ -126,6 +127,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         end_line   = int(raw_end)   - 1
         why = patch_data.get("why", "")
 
+        '''
         print(f"[DEBUG] Applying patch: start_line={start_line}, end_line={end_line}")
         temp_fixed_code = create__copy(original_code_path)
         print(f"[DEBUG] Temp fixed code path: {temp_fixed_code}")
@@ -134,6 +136,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         with open(temp_fixed_code, "r", encoding="utf-8") as f:
             temp_contents = f.read()
         print(f"[DEBUG] Applied patch to temp file: {temp_fixed_code}\n{temp_contents}")
+        '''
 
         if skip_tests:
             if manual:
@@ -146,8 +149,8 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             return file(success, 1, why, start_line, end_line, patch_contents, skip_tests)
 
 
-        try:
-            sys.path.insert(0, os.path.dirname(temp_fixed_code))
+        #try:
+            sys.path.insert(0, os.path.dirname(fixed_code))
             print(f"[DEBUG] sys.path: {sys.path}")
             print(f"[DEBUG] Running pytest with args: ['pytest', *tests, '--tb=short']")
             result = subprocess.run(
@@ -163,9 +166,9 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
                 break
             pass
 
-        finally:
-            print(f"[DEBUG] Removing temp file: {temp_fixed_code}")
-            os.remove(temp_fixed_code)
+        #finally:
+            #print(f"[DEBUG] Removing temp file: {temp_fixed_code}")
+            #os.remove(temp_fixed_code)
             num_runs += 1
 
     with open(fixed_code, "r", encoding="utf-8") as f:
