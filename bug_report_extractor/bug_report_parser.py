@@ -20,7 +20,7 @@ fields = [
     "Description of the bug",
     "Test cases",
     "Code with error",
-    "Wrong output"
+    "Context Files"
 ]
 
 # Regex pattern to split by headings (### ...)

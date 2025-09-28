@@ -55,12 +55,13 @@ body:
       required: true
 
   - type: textarea
-    id: wrong-output
+    id: context-files
     attributes:
-      label: Wrong output
-      description: If applicable, please paste in the wrong output generated.
+      label: Context Files
+      description: |
+        Please paste any files related to the error to give context. 
     validations:
-      required: false
+      required: true
 
   - type: checkboxes
     id: ai-fix

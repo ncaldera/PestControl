@@ -1,0 +1,29 @@
+name: Auto AI Bug Fixer
+
+on:
+  workflow_dispatch:     # allow manual trigger
+  push:
+    paths:
+      - "bug_reports/*.json"   # auto-trigger when new bug reports are added
+
+jobs:
+  ai-bug-fix:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run AI Bug Fixer
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python pipeline_runner.py
