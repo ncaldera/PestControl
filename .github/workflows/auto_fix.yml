@@ -46,6 +46,11 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+        
+      - name: Debug secrets
+        run: echo "✅ GEMINI_API_KEY is available"
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Debug env
         run: |
