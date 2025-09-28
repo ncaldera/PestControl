@@ -35,17 +35,20 @@ def create__copy(path):
     shutil.copy2(path, temp_path)
     return temp_path
 
-def apply_patch(temp_fixed_code, patch, start, end):
-    with open(temp_fixed_code, "r", encoding="utf-8") as f:
-        lines = f.readlines()
+def apply_patch(temp_file_path, fixed_code_path, start, end):
+    # read original into a list of lines
+    with open(temp_file_path, "r", encoding="utf-8") as f:
+        original_lines = f.readlines()
 
-    with open(temp_fixed_code, "r", encoding="utf-8") as f:
-        fixed_lines = f.readlines()
+    # read fixed code as lines (preserve newlines)
+    with open(fixed_code_path, "r", encoding="utf-8") as f:
+        fixed_lines = f.read().splitlines(keepends=True)
 
-    lines[start:end] = fixed_lines
+    # splice: replace [start:end] with fixed_lines
+    original_lines[start:end] = fixed_lines
 
-    with open(temp_fixed_code, "w", encoding="utf-8") as f:
-        f.writelines(lines)
+    with open(temp_file_path, "w", encoding="utf-8") as f:
+        f.writelines(original_lines)
 
 def file(success, num_runs, why, start_line, end_line, patch_contents, skip):
     output_path = "output.txt"
@@ -87,14 +90,14 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
     with open(context_files_path, "r", encoding="utf-8") as f:
         context_files = [line.strip() for line in f if line.strip()]
     
-    combined_json = running_gemini(original_code_path, context_files, description_path, test_cases_path)
+    combined_json = running_gemini(original_code_path, context_files, description_path, test_cases)
     input_data = combined_json
 
     #! run tests
     num_runs = 1
     for i in range(num_loops):
         if i > 0:
-            combined_json = running_gemini(original_code_path, context_files, description_path, test_cases_path)
+            combined_json = running_gemini(original_code_path, context_files, description_path, test_cases)
             input_data = combined_json
         
         tests = input_data["pytest_test_files"]
@@ -108,9 +111,16 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
                     key, value = line.split(":", 1)
                     patch_data[key.strip()] = value.strip()
 
-        start_line = int(patch_data.get("start_line")) - 1
-        end_line = int(patch_data.get("end_line")) - 1
+        raw_start = patch_data.get("start_line", patch_data.get("start_line"))
+        raw_end   = patch_data.get("end_line",   patch_data.get("end_line"))
+
+        if raw_start is None or raw_end is None:
+            raise ValueError(f"patch.txt missing start/end lines. Got keys: {list(patch_data.keys())}")
+
+        start_line = int(raw_start) - 1  # 0-based
+        end_line   = int(raw_end)   - 1
         why = patch_data.get("why", "")
+
 
         temp_fixed_code = create__copy(original_code_path)
 
@@ -123,7 +133,9 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             patch_contents = ""
             with open(fixed_code, "r", encoding="utf-8") as f:
                 patch_contents = f.read()
-            return file(success, 1, why, start_line, end_line, fixed_code, patch_contents, skip_tests)
+            patch_contents = Path(fixed_code).read_text(encoding="utf-8")
+            return file(success, 1, why, start_line, end_line, patch_contents, skip_tests)
+
 
         try:
             sys.path.insert(0, os.path.dirname(temp_fixed_code))
@@ -161,5 +173,4 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         else: 
             print(f'''{Fore.RED}All generated fixes failed.{Style.RESET_ALL} 
                     Tested {num_runs - 1} patches.''')
-
-    return file(success, num_runs, why, start_line, end_line, fixed_code, patch_contents, skip_tests)
+    return file(success, num_runs, why, start_line, end_line, patch_contents, skip_tests)
