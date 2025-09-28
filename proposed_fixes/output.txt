@@ -3,64 +3,26 @@ Original: testing_chat/stats.py
 Fixed: fixed_code.txt
 Status: Success
 Lines: 15-15
-Why: The original code incorrectly returned only the upper middle element (s[mid]) for both odd and even length lists. For even-length lists, the median is the average of the two middle elements. The fix adds a conditional check: if the list length (n) is even, it calculates the average of s[mid-1] and s[mid]; otherwise (for odd length lists), it returns s[mid], which is correct.
+Why: The original code incorrectly returned the upper middle element for even-length lists. The fix adds a conditional check:
 Patch:
-diff --git a/testing_chat/stats.py b/fixed_code.txt
-index b150426..5251c44 100644
---- a/testing_chat/stats.py
-+++ b/fixed_code.txt
-@@ -1,5 +1,3 @@
--# mylib/stats.py
--
- def median(nums):
-     """
-     Return the median of a non-empty list of numbers.
-@@ -14,4 +12,9 @@ def median(nums):
-     mid = n // 2
- 
-     # ❌ BUG: even-length case should average s[mid-1] and s[mid]
--    return s[mid]
-+    if n % 2 == 0:
-+        # Even number of elements, average the two middle ones
-+        return (s[mid - 1] + s[mid]) / 2
-+    else:
-+        # Odd number of elements, return the middle one
-+        return s[mid]
-\ No newline at end of file
+def median(nums):
+    """
+    Return the median of a non-empty list of numbers.
+    BUG: For even-length lists, this incorrectly returns the upper middle
+    element instead of the average of the two middle elements.
+    """
+    if not nums:
+        raise ValueError("nums must be non-empty")
 
-Timestamp: 2025-09-28T09:12:09.120491
-=== REPORT END ===
+    s = sorted(nums)
+    n = len(s)
+    mid = n // 2
 
-=== REPORT START ===
-Original: testing_chat/stats.py
-Fixed: fixed_code.txt
-Status: Success
-Lines: 15-15
-Why: The original code incorrectly returned only the upper middle element (s[mid]) for both odd and even length lists. For even-length lists, the median is the average of the two middle elements. The fix adds a conditional check: if the list length (n) is even, it calculates the average of s[mid-1] and s[mid]; otherwise (for odd length lists), it returns s[mid], which is correct.
-Patch:
-diff --git a/testing_chat/stats.py b/fixed_code.txt
-index b150426..5251c44 100644
---- a/testing_chat/stats.py
-+++ b/fixed_code.txt
-@@ -1,5 +1,3 @@
--# mylib/stats.py
--
- def median(nums):
-     """
-     Return the median of a non-empty list of numbers.
-@@ -14,4 +12,9 @@ def median(nums):
-     mid = n // 2
- 
-     # ❌ BUG: even-length case should average s[mid-1] and s[mid]
--    return s[mid]
-+    if n % 2 == 0:
-+        # Even number of elements, average the two middle ones
-+        return (s[mid - 1] + s[mid]) / 2
-+    else:
-+        # Odd number of elements, return the middle one
-+        return s[mid]
-\ No newline at end of file
-
-Timestamp: 2025-09-28T09:14:15.960177
+    # ❌ BUG: even-length case should average s[mid-1] and s[mid]
+    if n % 2 == 0:
+        return (s[mid - 1] + s[mid]) / 2
+    else:
+        return s[mid]
+Timestamp: 2025-09-28T13:32:10.244497
 === REPORT END ===
 
