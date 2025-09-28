@@ -101,7 +101,7 @@ def parse_report_txt(file_path: Path):
 
 st.title("Pest Control")
 
-REPORTS_DIR = Path("output")  # adjust to your repo’s output folder
+REPORTS_DIR = Path("proposed_fixes")  # adjust to your repo’s output folder
 report_files = sorted(REPORTS_DIR.glob("*.txt"), key=lambda f: f.stat().st_mtime, reverse=True)
 
 if not report_files:
@@ -121,22 +121,42 @@ else:
     
     st.subheader("Summary of Bug Fixes")
     st.dataframe(df)
-
-    # Detailed viewers
     st.subheader("Detailed Reports")
-    for r in all_reports:
-        with st.expander(f"{r['file']} — {r['status']}"):
-            st.markdown(f"**Lines:** {r['start_line']}–{r['end_line']}")
-            st.markdown(f"**Why:** {r['why']}")
-            st.markdown(f"**Timestamp:** {r['timestamp']}")
 
-            if r["patch"]:
-                st.markdown("**Suggested Patch:**")
-                st.markdown(f"<div class='code-box'>{r['patch']}</div>", unsafe_allow_html=True)
+    for idx, r in enumerate(all_reports):
+        # Unique key per report for session state
+        key = f"show_report_{idx}"
+        if key not in st.session_state:
+            st.session_state[key] = False
 
-            with st.expander("Raw Report Text"):
-                st.markdown(
-                    f"<div class='raw-box'>{r['raw']}</div>",
-                    unsafe_allow_html=True
-                )
+        # Button acts as the "header" that can be clicked
+        if st.button(f"{r['file']} — {r['status']}", key=f"btn_{idx}"):
+            st.session_state[key] = not st.session_state[key]
 
+        # Expanded content
+        if st.session_state[key]:
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: #002b5c;
+                    color: #00d1ff;
+                    font-family: Monaco, monospace;
+                    padding: 10px;
+                    border-radius: 8px;
+                    margin-bottom: 10px;
+                ">
+                <p><strong>Lines:</strong> {r['start_line']}–{r['end_line']}</p>
+                <p><strong>Why:</strong> {r['why']}</p>
+                <p><strong>Timestamp:</strong> {r['timestamp']}</p>
+                """
+                + (f"<p><strong>Suggested Patch:</strong><br><div class='code-box'>{r['patch']}</div></p>"
+                if r["patch"] else "")
+                + f"""
+                <details style="color:#ffffff;">
+                    <summary>Raw Report Text</summary>
+                    <div class='raw-box'>{r['raw']}</div>
+                </details>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )

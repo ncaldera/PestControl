@@ -1,92 +1,15 @@
-'''
-input: all .txt
-- patch
-- why (for output, why we applied the patch we did)  
-- line nums patch starts and ends at
-- num loops (if not specified, default 4)
-
-- original code 
-- test files 
-
-loop: 
-1. copy original code
-2. apply patch (exchange buggy code with patch) 
-3. run tests
-4. if passes -> output
-   if fails -> loop - call gemini again
-
-
-output: in terminal
-- if successful: suggested patch, why works
-- if unsuccessful: failure message
-
-run again option? [did it work y/n -> rerun prompt]
-
-'''
 from colorama import Fore, Back, Style, init
 import json, shutil, subprocess, os, tempfile, sys
 from pathlib import Path
 from ai_fixer.gemini import running_gemini
 import json
+from datetime import datetime
 
-#! helper functions
-'''
-def create__copy(path):
-    fd, temp_path = tempfile.mkstemp(suffix='.py')  # unique temp file
-    os.close(fd)  # close file descriptor
-    shutil.copy2(path, temp_path)
-    return temp_path
-
-def apply_patch(temp_file_path, fixed_code_path, start, end):
-    # read original into a list of lines
-    with open(temp_file_path, "r", encoding="utf-8") as f:
-        original_lines = f.readlines()
-
-    # read fixed code as lines (preserve newlines)
-    with open(fixed_code_path, "r", encoding="utf-8") as f:
-        fixed_lines = f.read().splitlines(keepends=True)
-
-    # splice: replace [start:end] with fixed_lines
-    original_lines[start:end] = fixed_lines
-
-    with open(temp_file_path, "w", encoding="utf-8") as f:
-        f.writelines(original_lines)
-'''
-def file(success, num_runs, why, start_line, end_line, patch_contents, skip, folder_path):
-    
-    output_path = output_path = os.path.basename(folder_path) + ".txt"
-
-    with open(output_path, "a", encoding="utf-8") as f:
-        if success: 
-            if skip:
-                f.write(f"No test cases provided. Running in patch-only mode.")
-            else: 
-                f.write(f'''Generated fix successful!
-                    Tested {num_runs} patches.''')
-
-            f.write("Suggested patch:\n")
-            width = shutil.get_terminal_size().columns
-            f.write(f"line {start_line}" + "-" * (width - 8) + "\n")
-            f.write(f"{patch_contents}\n")
-            f.write(f"line {end_line}" + "-" * (width - 8) + "\n")
-            f.write(f"Original buggy code description:\n{why}\n")
-            f.write("Good luck with your fix!")
-
-        else: 
-            f.write(f'''All generated fixes failed. 
-                    Tested {num_runs - 1} patches.''')
-        
-    return output_path
-
-#! main func
+#! takes gemini input, runs tests, delivers correct output
 def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool manual y/n, file_path dir
     success = False
-    print(f"[DEBUG] Listing files in folder_path: {folder_path}")
-    for fname in os.listdir(folder_path):
-        print(f"  - {fname}")
 
-    #! saving original code path, first gemini run
-
+    #! opening gemini input, first call
     original_code_path = os.path.join(folder_path, "code_with_error.txt")
     context_files_path = os.path.join(folder_path, "context_files.txt")
     description_path = os.path.join(folder_path, "description_of_the_bug.txt")
@@ -95,21 +18,20 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
 
     with open(test_cases_path, "r", encoding="utf-8") as f:
         test_cases = [line.strip() for line in f if line.strip()]
-    print(f"[DEBUG] Test cases: {test_cases}")
 
     with open(context_files_path, "r", encoding="utf-8") as f:
         context_files = [line.strip() for line in f if line.strip()]
-    print(f"[DEBUG] Context files: {context_files}")
 
     with open(original_file, "r", encoding="utf-8") as f:
         original_file_path = f.readline().strip()
 
     combined_json = running_gemini(original_code_path, context_files, description_path, test_cases)
-    print(f"[DEBUG] Gemini output: {json.dumps(combined_json, indent=2)}")
     input_data = combined_json
 
+    #! begin looping the patch iterations
     num_runs = 1
     for i in range(num_loops):
+        #! get new gemini input on following runs
         if i > 0:
             combined_json = running_gemini(original_code_path, context_files, description_path, test_cases)
             input_data = combined_json
@@ -124,7 +46,6 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
                 if ":" in line:
                     key, value = line.split(":", 1)
                     patch_data[key.strip()] = value.strip()
-        print(f"[DEBUG] Patch data: {patch_data}")
 
         raw_start = patch_data.get("start_line", patch_data.get("start_line"))
         raw_end   = patch_data.get("end_line",   patch_data.get("end_line"))
@@ -136,17 +57,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         end_line   = int(raw_end)   - 1
         why = patch_data.get("why", "")
 
-        '''
-        print(f"[DEBUG] Applying patch: start_line={start_line}, end_line={end_line}")
-        temp_fixed_code = create__copy(original_code_path)
-        print(f"[DEBUG] Temp fixed code path: {temp_fixed_code}")
-
-        apply_patch(temp_fixed_code, fixed_code, start_line, end_line)
-        with open(temp_fixed_code, "r", encoding="utf-8") as f:
-            temp_contents = f.read()
-        print(f"[DEBUG] Applied patch to temp file: {temp_fixed_code}\n{temp_contents}")
-        '''
-
+        #! if not given tests to run code with, suggest patch anyways
         if skip_tests:
             if manual:
                 print(f"{Fore.YELLOW} No test cases provided. Running in patch-only mode.{Style.RESET_ALL}")
@@ -157,8 +68,7 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             patch_contents = Path(fixed_code).read_text(encoding="utf-8")
             return file(success, 1, why, start_line, end_line, patch_contents, skip_tests)
 
-
-        #try
+        #! save original file, temporaily overwrite with fixed code to run tests, restore
         with open(fixed_code, "r", encoding="utf-8") as f:
             fixed_code_out = f.read()
         
@@ -168,30 +78,60 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
         with open(orig_file, "w", encoding="utf-8") as f:
             f.write(fixed_code_out)
 
-        print(f"[DEBUG] sys.path: {sys.path}")
-        print(f"[DEBUG] Running pytest with args: ['pytest', *tests, '--tb=short']")
         result = subprocess.run(
             ["pytest", *tests, "--tb=short"],
             capture_output = True,
             text = True)
         shutil.move(orig_file + ".bak", orig_file)
-        print(f"[DEBUG] Pytest stdout:\n{result.stdout}")
-        print(f"[DEBUG] Pytest stderr:\n{result.stderr}")
-        print(f"[DEBUG] Pytest returncode: {result.returncode}")
 
-        if result.returncode == 0: # all tests passed
+        #! if the test suite passes, success -> go to output
+        if result.returncode == 0:
             success = True
             break
         pass
-
-        #finally:
-            #print(f"[DEBUG] Removing temp file: {temp_fixed_code}")
-            #os.remove(temp_fixed_code)
         num_runs += 1
 
-    with open(fixed_code, "r", encoding="utf-8") as f:
-            patch_contents = f.read()
-    
+    #! output files: success or fail, tested num patches, patch contents, original code, fixed code, and why buggy
+    output_path = "output.txt"
+
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--no-index", orig_file, fixed_code],
+            capture_output=True,
+            text=True
+        )
+        patch_text = result.stdout
+    except Exception:
+        patch_text = None
+
+    if not patch_text:
+        patch_text = Path(fixed_code).read_text(encoding="utf-8") if Path(fixed_code).exists() else ""
+
+    report = {
+        "original_file": orig_file,                     # just path
+        "fixed_file": fixed_code if Path(fixed_code).exists() else "",
+        "status": "Success" if success else "Fail",
+        "start_line": start_line,
+        "end_line": end_line,
+        "why": why,
+        "patch": patch_text,
+        "timestamp": datetime.now().isoformat()
+    }
+
+    output_path = "output.txt"
+    with open(output_path, "a", encoding="utf-8") as f:
+        f.write("=== REPORT START ===\n")
+        f.write(f"Original: {report['original_file']}\n")
+        f.write(f"Fixed: {report['fixed_file']}\n")
+        f.write(f"Status: {report['status']}\n")
+        f.write(f"Lines: {report['start_line']}-{report['end_line']}\n")
+        f.write(f"Why: {report['why']}\n")
+        f.write("Patch:\n")
+        f.write(f"{report['patch']}\n")
+        f.write(f"Timestamp: {report['timestamp']}\n")
+        f.write("=== REPORT END ===\n\n")
+
+    #! prints to terminal if manual selected
     if manual:
         if success: 
             print(f'''{Fore.GREEN}Generated fix successful!{Style.RESET_ALL}
@@ -202,10 +142,11 @@ def tester(num_loops, manual, folder_path, skip_tests): # int num loops, bool ma
             print(Fore.CYAN + f"line {start_line}" + "-" * (width - 8) + "\n")
             print(f"{patch_contents}\n")
             print(Fore.CYAN + f"line {end_line}" + "-" * (width - 8) + "\n")
-            print(f"Original buggy code description:\n{why}\n")
+            print(f"Original buggy code description:\n{why}\n\n")
             print(Fore.MAGENTA + "Good luck with your fix!")
 
         else: 
-            print(f'''{Fore.RED}All generated fixes failed.{Style.RESET_ALL} 
+            print(f'''{Fore.RED}All generated fixes failed. :({Style.RESET_ALL} 
                     Tested {num_runs - 1} patches.''')
-    return file(success, num_runs, why, start_line, end_line, patch_contents, skip_tests, folder_path)
+            
+    return output_path
