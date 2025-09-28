@@ -1,0 +1,21 @@
+diff --git a/extracted_reports/issue_59/code_with_error.txt b/fixed_code.txt
+index 3f95405..1cca46e 100644
+--- a/extracted_reports/issue_59/code_with_error.txt
++++ b/fixed_code.txt
+@@ -1,4 +1,4 @@
+-```def median(nums):
++def median(nums):
+     """
+     Return the median of a non-empty list of numbers.
+     BUG: For even-length lists, this incorrectly returns the upper middle
+@@ -12,4 +12,7 @@
+     mid = n // 2
+ 
+     # ❌ BUG: even-length case should average s[mid-1] and s[mid]
+-    return s[mid]```
+\ No newline at end of file
++    if n % 2 == 0:
++        return (s[mid - 1] + s[mid]) / 2
++    else:
++        return s[mid]
+\ No newline at end of file
