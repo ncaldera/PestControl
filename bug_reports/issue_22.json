@@ -1,0 +1,82 @@
+{
+  "active_lock_reason": null,
+  "assignee": null,
+  "assignees": [],
+  "author_association": "COLLABORATOR",
+  "body": "### Is there an existing issue for this?\n\n- [ ] I have searched the existing issues\n\n### Description of the bug\n\nmedian() fails for even-length lists; it returns the upper middle element instead of the average.\n\n\n### Test cases\n\ntesting_chat/test_stats.py\n\n### Code with error\n\n```def median(nums):\n    \"\"\"\n    Return the median of a non-empty list of numbers.\n    BUG: For even-length lists, this incorrectly returns the upper middle\n    element instead of the average of the two middle elements.\n    \"\"\"\n    if not nums:\n        raise ValueError(\"nums must be non-empty\")\n\n    s = sorted(nums)\n    n = len(s)\n    mid = n // 2\n\n    # ❌ BUG: even-length case should average s[mid-1] and s[mid]\n    return s[mid]\n```\n\n### Context Files\n\ntesting_chat/stats.py\n\n### Use AI-Powered fix\n\n- [x] Use AI powered fix",
+  "closed_at": null,
+  "comments": 0,
+  "comments_url": "https://api.github.com/repos/ncaldera/PestControl/issues/22/comments",
+  "created_at": "2025-09-28T06:06:35Z",
+  "events_url": "https://api.github.com/repos/ncaldera/PestControl/issues/22/events",
+  "html_url": "https://github.com/ncaldera/PestControl/issues/22",
+  "id": 3461143368,
+  "issue_dependencies_summary": {
+    "blocked_by": 0,
+    "blocking": 0,
+    "total_blocked_by": 0,
+    "total_blocking": 0
+  },
+  "labels": [
+    {
+      "color": "d73a4a",
+      "default": true,
+      "description": "Something isn't working",
+      "id": 9358838601,
+      "name": "bug",
+      "node_id": "LA_kwDOP3uXf88AAAACLdSLSQ",
+      "url": "https://api.github.com/repos/ncaldera/PestControl/labels/bug"
+    }
+  ],
+  "labels_url": "https://api.github.com/repos/ncaldera/PestControl/issues/22/labels{/name}",
+  "locked": false,
+  "milestone": null,
+  "node_id": "I_kwDOP3uXf87OTNtI",
+  "number": 22,
+  "performed_via_github_app": null,
+  "reactions": {
+    "+1": 0,
+    "-1": 0,
+    "confused": 0,
+    "eyes": 0,
+    "heart": 0,
+    "hooray": 0,
+    "laugh": 0,
+    "rocket": 0,
+    "total_count": 0,
+    "url": "https://api.github.com/repos/ncaldera/PestControl/issues/22/reactions"
+  },
+  "repository_url": "https://api.github.com/repos/ncaldera/PestControl",
+  "state": "open",
+  "state_reason": null,
+  "sub_issues_summary": {
+    "completed": 0,
+    "percent_completed": 0,
+    "total": 0
+  },
+  "timeline_url": "https://api.github.com/repos/ncaldera/PestControl/issues/22/timeline",
+  "title": "55 burgers",
+  "updated_at": "2025-09-28T06:06:35Z",
+  "url": "https://api.github.com/repos/ncaldera/PestControl/issues/22",
+  "user": {
+    "avatar_url": "https://avatars.githubusercontent.com/u/176330089?v=4",
+    "events_url": "https://api.github.com/users/Meishin816/events{/privacy}",
+    "followers_url": "https://api.github.com/users/Meishin816/followers",
+    "following_url": "https://api.github.com/users/Meishin816/following{/other_user}",
+    "gists_url": "https://api.github.com/users/Meishin816/gists{/gist_id}",
+    "gravatar_id": "",
+    "html_url": "https://github.com/Meishin816",
+    "id": 176330089,
+    "login": "Meishin816",
+    "node_id": "U_kgDOCoKVaQ",
+    "organizations_url": "https://api.github.com/users/Meishin816/orgs",
+    "received_events_url": "https://api.github.com/users/Meishin816/received_events",
+    "repos_url": "https://api.github.com/users/Meishin816/repos",
+    "site_admin": false,
+    "starred_url": "https://api.github.com/users/Meishin816/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/Meishin816/subscriptions",
+    "type": "User",
+    "url": "https://api.github.com/users/Meishin816",
+    "user_view_type": "public"
+  }
+}
